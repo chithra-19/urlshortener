@@ -42,19 +42,43 @@ public class UrlController {
     @PostMapping("/shorten")
     public ResponseEntity<UrlResponse> shortenUrl(@RequestBody UrlRequest request) {
 
+        if (request.getOriginalUrl() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
         String originalUrl = request.getOriginalUrl().trim();
         String customCode = request.getCustomCode();
 
-        if(originalUrl == null ||
-           !(originalUrl.startsWith("http://") || originalUrl.startsWith("https://"))) {
-
+        if (originalUrl.isEmpty() ||
+            !(originalUrl.startsWith("http://") || originalUrl.startsWith("https://"))) {
             return ResponseEntity.badRequest().build();
         }
 
         Url url = urlService.shortenUrl(originalUrl, customCode);
 
-        String shortUrl = "http://localhost:8080/" + url.getShortCode();
+        String baseUrl = System.getenv("BASE_URL");
+
+        if (baseUrl == null || baseUrl.isEmpty()) {
+            baseUrl = "http://localhost:8080";
+        }
+
+        String shortUrl = baseUrl + "/" + url.getShortCode();
 
         return ResponseEntity.ok(new UrlResponse(shortUrl, originalUrl));
+    }
+    
+    @GetMapping("/{shortCode}")
+    public ResponseEntity<?> redirect(@PathVariable String shortCode) {
+
+        Optional<Url> urlOptional = urlService.getOriginalUrl(shortCode);
+
+        if (urlOptional.isPresent()) {
+            return ResponseEntity
+                    .status(302)
+                    .location(URI.create(urlOptional.get().getOriginalUrl()))
+                    .build();
+        } else {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
