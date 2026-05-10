@@ -59,7 +59,7 @@ public class UrlController {
         String baseUrl = System.getenv("BASE_URL");
 
         if (baseUrl == null || baseUrl.isEmpty()) {
-            baseUrl = "http://localhost:8080";
+            baseUrl = "http://localhost:8081";
         }
 
         String shortUrl = baseUrl + "/" + url.getShortCode();
